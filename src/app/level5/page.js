@@ -252,7 +252,26 @@ export default function Level5() {
       ),
       task: 'Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
       check: (code) => {
-        const result = /\b((let\s+\w+\s*:\s*Option<\w+>\s*=\s*(Some\([^)]*\)|None)|match\s+\w+\s*\{[^}]*\b(Some|None)\b)|fn\s+\w+\s*\([^)]*\)\s*->\s*Result<[^>]+,\s*[^>]+>\s*\{[^}]*\b(Ok|Err)\b).*?(match\s+\w+\s*\{[^}]*\b(Ok|Err)\b))/ms.test(code);
+        const result = new RegExp(
+          [
+            // Match a let statement with Option
+            '\\b(' +
+              'let\\s+\\w+\\s*:\\s*Option<\\w+>\\s*=\\s*(Some\\([^)]*\\)|None)' +
+        
+              // OR a match statement with Some/None
+              '|match\\s+\\w+\\s*\\{[^}]*\\b(?:Some|None)\\b' +
+        
+              // OR a function returning Result with Ok/Err
+              '|fn\\s+\\w+\\s*\\([^)]*\\)\\s*->\\s*Result<[^>]+,\\s*[^>]+>\\s*\\{[^}]*\\b(?:Ok|Err)\\b' +
+            ')' +
+        
+            // Non-greedy match for another match statement with Ok/Err
+            '.*?' +
+            '(match\\s+\\w+\\s*\\{[^}]*\\b(?:Ok|Err)\\b)'
+          ].join(''),
+          'ms' // multiline + dotall
+        ).test(code);
+        
         console.log(`Lesson 3 Check: Code="${code}", Result=${result}`);
         return result;
       },
