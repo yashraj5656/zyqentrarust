@@ -250,19 +250,22 @@ export default function Level5() {
           </p>
         </div>
       ),
-      task: 'Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
+      task: 'Write a snippet using a struct or enum (e.g., struct Point { x: i32, y: i32 } or enum Color { Red, Green, Blue }).',
       check: (code) => {
-          try {
-            const result = /\b(let\s+(mut\s+)?(\w+\s*:\s*\[\w+;\s*\d+\]\s*=\s*\[.*?\]|\w+\s*:\s*&\[\w+.*?\]|(mut\s+)?\w+\s*:\s*Vec<\w+>.*?Vec::new\(\)|vec!\[.*?\]))/ms.test(code);
-            console.log(`Lesson 0 Check: Code="${code}", Result=${result}`);
-            return result;
-          } catch (err) {
-            console.error('Regex check failed:', err);
-            return false; // Fail gracefully
-          }
+        try {
+          // Simple, safe regex that only checks for "struct" or "enum"
+          const result = /\b(struct|enum)\b/.test(code);
+          console.log(`Lesson 4 Check: Code="${code}", Result=${result}`);
+          return result;
+        } catch (err) {
+          console.error('Regex check failed:', err);
+          return false;
+        }
       },
-      error: '❌ Try again. Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
-      success: '✅ Great! You explored Option and Result for safe error handling.'
+      error: '❌ Try again. Write a snippet using a struct or enum (e.g., struct Point { x: i32, y: i32 } or enum Color { Red, Green, Blue }).',
+      success: '✅ Great! You practiced creating a struct or enum.'
+      
+      
     },
     {
       title: "Practice building custom data types",

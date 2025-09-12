@@ -2,12 +2,12 @@
   "name": "zyqentrarust",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
-    "lint": "eslint"
-  },
+"scripts": {
+  "dev": "set NEXT_PRIVATE_USE_TURBOPACK=false && next dev",
+  "build": "set NEXT_PRIVATE_USE_TURBOPACK=false && next build",
+  "start": "next start"
+},
+
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "bcryptjs": "^3.0.2",
