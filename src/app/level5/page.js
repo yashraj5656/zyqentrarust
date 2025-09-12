@@ -252,7 +252,7 @@ export default function Level5() {
       ),
       task: 'Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
       check: (code) => {
-        const result = /\b((let\s+\w+\s*:\s*Option<\w+>\s*=\s*(Some|None)\([^)]*\)|match\s+\w+\s*\{[^}]*Some|None)|fn\s+\w+\s*\([^)]*\)\s*->\s*Result<[^>]+,\s*[^>]+>\s*\{[^}]*Ok|Err)).*?(match\s+\w+\s*\{[^}]*Ok|Err))/ms.test(code);
+        const result = /\b((let\s+\w+\s*:\s*Option<\w+>\s*=\s*(Some\([^)]*\)|None)|match\s+\w+\s*\{[^}]*\b(Some|None)\b)|fn\s+\w+\s*\([^)]*\)\s*->\s*Result<[^>]+,\s*[^>]+>\s*\{[^}]*\b(Ok|Err)\b).*?(match\s+\w+\s*\{[^}]*\b(Ok|Err)\b))/ms.test(code);
         console.log(`Lesson 3 Check: Code="${code}", Result=${result}`);
         return result;
       },
