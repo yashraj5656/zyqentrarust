@@ -252,28 +252,14 @@ export default function Level5() {
       ),
       task: 'Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
       check: (code) => {
-        const result = new RegExp(
-          [
-            // Match a let statement with Option
-            '\\b(' +
-              'let\\s+\\w+\\s*:\\s*Option<\\w+>\\s*=\\s*(Some\\([^)]*\\)|None)' +
-        
-              // OR a match statement with Some/None
-              '|match\\s+\\w+\\s*\\{[^}]*\\b(?:Some|None)\\b' +
-        
-              // OR a function returning Result with Ok/Err
-              '|fn\\s+\\w+\\s*\\([^)]*\\)\\s*->\\s*Result<[^>]+,\\s*[^>]+>\\s*\\{[^}]*\\b(?:Ok|Err)\\b' +
-            ')' +
-        
-            // Non-greedy match for another match statement with Ok/Err
-            '.*?' +
-            '(match\\s+\\w+\\s*\\{[^}]*\\b(?:Ok|Err)\\b)'
-          ].join(''),
-          'ms' // multiline + dotall
-        ).test(code);
-        
-        console.log(`Lesson 3 Check: Code="${code}", Result=${result}`);
-        return result;
+          try {
+            const result = /\b(let\s+(mut\s+)?(\w+\s*:\s*\[\w+;\s*\d+\]\s*=\s*\[.*?\]|\w+\s*:\s*&\[\w+.*?\]|(mut\s+)?\w+\s*:\s*Vec<\w+>.*?Vec::new\(\)|vec!\[.*?\]))/ms.test(code);
+            console.log(`Lesson 0 Check: Code="${code}", Result=${result}`);
+            return result;
+          } catch (err) {
+            console.error('Regex check failed:', err);
+            return false; // Fail gracefully
+          }
       },
       error: '❌ Try again. Write a snippet with Option or Result (e.g., let opt: Option<i32> = Some(5); match opt { Some(x) => {}, None => {} }).',
       success: '✅ Great! You explored Option and Result for safe error handling.'
