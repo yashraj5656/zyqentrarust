@@ -8,7 +8,7 @@ export default function Certificate() {
   const [studentName, setStudentName] = useState("");
 
   useEffect(() => {
-    const completed = localStorage.getItem("level9Completed") === "true";
+    const completed = localStorage.getItem("level9RustCompleted") === "true";
     setUnlocked(completed);
   }, []);
 

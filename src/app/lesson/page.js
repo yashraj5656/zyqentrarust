@@ -18,7 +18,7 @@ export default function Lesson() {
   useEffect(() => {
     const status = {};
     for (let i = 1; i <= 9; i++) {
-      status[`level${i}`] = localStorage.getItem(`level${i}Completed`) === "true";
+      status[`level${i}`] = localStorage.getItem(`level${i}RustCompleted`) === "true";
     }
     setCompleted(status);
         // Check subscription
