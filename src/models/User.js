@@ -11,6 +11,9 @@ const UserSchema = new mongoose.Schema(
     rzp_checkout_anon_id: { type: String, default: null },
     rzp_device_id: { type: String, default: null },
     rzp_stored_checkout_id: { type: String, default: null },
+
+    // Store localStorage data as JSON
+    localStorageData: { type: mongoose.Schema.Types.Mixed, default: {} }, 
   },
   { timestamps: true }
 );

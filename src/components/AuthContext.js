@@ -1,63 +1,128 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
+import { syncLocalStorageToDB } from "@/utils/syncLocalStorage";
+
+
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-// AuthContext.js
-const login = async (email, password) => {
-  try {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  useEffect(() => {
+    // Save once on page load
+    syncLocalStorageToDB();
+  
+    // Watch for changes to localStorage
+    const handleStorageChange = () => {
+      syncLocalStorageToDB();
+    };
+  
+    window.addEventListener("storage", handleStorageChange);
+  
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
-    const data = await res.json();
+  // ✅ Restore user’s saved localStorage from DB
+  const restoreLocalStorage = async (token) => {
+    try {
+      const res = await fetch("/api/fetch-localstorage", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!res.ok) {
-      return { success: false, message: data.error || "Login failed" };
+      if (res.ok) {
+        const data = await res.json();
+        if (data.localStorageData) {
+          Object.entries(data.localStorageData).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to restore localStorage:", err);
     }
+  };
 
-    localStorage.setItem("token", data.token);
-    setUser({ email: data.user.email, subscribed: data.user.subscribed });
+  // ✅ Save current localStorage to DB
+  const saveLocalStorage = async (token) => {
+    try {
+      const localData = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key !== "token") {
+          localData[key] = localStorage.getItem(key);
+        }
+      }
 
-    return { success: true, message: "Login successful" };
-  } catch (error) {
-    console.error("Login failed:", error.message);
-    return { success: false, message: error.message };
-  }
-};
-
-const signup = async (email, password) => {
-  try {
-    const res = await fetch("/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      return { success: false, message: data.error || "Signup failed" };
+      await fetch("/api/save-localstorage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ localStorageData: localData }),
+      });
+    } catch (err) {
+      console.error("Failed to save localStorage:", err);
     }
+  };
 
-    localStorage.setItem("token", data.token);
-    setUser({ email: data.user.email, subscribed: data.user.subscribed });
+  // ✅ Login
+  const login = async (email, password) => {
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    return { success: true, message: "Account created successfully" };
-  } catch (error) {
-    console.error("Signup failed:", error.message);
-    return { success: false, message: error.message };
-  }
-};
+      const data = await res.json();
+      if (!res.ok) return { success: false, message: data.error || "Login failed" };
 
+      localStorage.setItem("token", data.token);
+      setUser({ email: data.user.email, subscribed: data.user.subscribed });
+
+      // 🔹 Restore saved localStorage after login
+      await restoreLocalStorage(data.token);
+
+      return { success: true, message: "Login successful" };
+    } catch (error) {
+      console.error("Login failed:", error.message);
+      return { success: false, message: error.message };
+    }
+  };
+
+  // ✅ Signup
+  const signup = async (email, password) => {
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) return { success: false, message: data.error || "Signup failed" };
+
+      localStorage.setItem("token", data.token);
+      setUser({ email: data.user.email, subscribed: data.user.subscribed });
+
+      // 🔹 Restore saved localStorage after signup
+      await restoreLocalStorage(data.token);
+
+      return { success: true, message: "Account created successfully" };
+    } catch (error) {
+      console.error("Signup failed:", error.message);
+      return { success: false, message: error.message };
+    }
+  };
 
   // ✅ Logout
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem("token");
+    if (token) await saveLocalStorage(token); // save before logout
     localStorage.removeItem("token");
     setUser(null);
   };
@@ -66,50 +131,15 @@ const signup = async (email, password) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      // Ideally, fetch user info from backend using token
-      // For now, placeholder (you can replace with actual fetch)
       setUser({ email: "session@restored.com", subscribed: false });
+      restoreLocalStorage(token); // restore localStorage from DB
     }
   }, []);
 
-  // ✅ Update subscription status (after payment)
-  const updateSubscription = (status = true) => {
-    setUser((prev) => prev ? { ...prev, subscribed: status } : null);
-  };
-
-  const verifyPayment = async (paymentData) => {
-    try {
-      const res = await fetch("/api/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentData),
-      });
-  
-      const data = await res.json();
-  
-      if (res.ok && data.subscribed) {
-        setUser((prev) => ({
-          ...prev,
-          subscribed: true,
-          rzp_checkout_anon_id: data.rzp_checkout_anon_id,
-          rzp_device_id: data.rzp_device_id,
-          rzp_stored_checkout_id: data.rzp_stored_checkout_id,
-        }));
-  
-        return { success: true, message: data.message };
-      } else {
-        return { success: false, message: data.message };
-      }
-    } catch (err) {
-      console.error("Payment verification failed:", err);
-      return { success: false, message: "Payment verification error" };
-    }
-  };
-  
-  
-
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateSubscription, verifyPayment }}>
+    <AuthContext.Provider
+      value={{ user, login, signup, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
