@@ -149,7 +149,7 @@ export default function Dashboard() {
 
 
         <div className="text-center">
-          <p className="pp">Learning Rust is like learning to speak to the web — the more you practice, the more it listens.</p>
+          <p className="pp">Rust is the art of building unbreakable machines with words.</p>
           <p className="">
             <Link href="/signup" className=""><button data-text="Signup/Login">Signup/Login</button></Link>
             {/*{" "}or{" "} 
